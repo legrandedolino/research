@@ -132,10 +132,24 @@ View(unpaired_summary) # What shows are repeated but paired rows
 ################################################################################
 # PRELIMINARY DESCRIPTIVES
 ################################################################################
-
+library(tidyr)
 yearly_counts <- data %>%
+  filter(test == "pre") %>% # One row per person!
   group_by(year) %>%
-  summarize(Total_Responses = n()/2)
-print(yearly_counts) # Shows the unique individuals per year
+  summarize(Total_Participants = n())
+
+# Gender Aggregated by Year (Wide Format)
+gender_by_year <- data %>%
+  filter(test == "pre") %>%
+  group_by(year, gender) %>%
+  summarize(Count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = gender, values_from = Count, values_fill = 0)
+
+# Race Aggregated by Year (Wide Format)
+race_by_year <- data %>%
+  filter(test == "pre") %>%
+  group_by(year, race) %>%
+  summarize(Count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = race, values_from = Count, values_fill = 0)
 
 write.csv(data, "data.csv")
