@@ -1,10 +1,13 @@
 ################################################################################
 #
 # 1. DATA CLEANING - EDUCATING FOR ENVIRONMENTAL CHANGE
-# Latest Version: Jun 10, 2026
+# Latest Version: Jun 11, 2026
 # 
 # This file processes both the pre- and post-test excel forms for further
 # data analysis.
+#
+# Version update:
+# Fixed issue in two non-aligned column names across pre- and post-tests
 #
 ################################################################################
 
@@ -47,6 +50,7 @@ pre <- pre %>%
   select(-any_of(meta))
 
 # Do the same for post, but also remove the first three entries
+# Also renames mislabeled columns
 post <- post %>%
   slice(-(1:4)) %>% 
   mutate(ID = toupper(paste0(substr(birthMonth, 1, 3), 
@@ -55,6 +59,9 @@ post <- post %>%
          test = "post",
          year = format(as.Date(as.numeric(EndDate), origin = "1899-12-30"), 
                        "%Y")) %>% 
+  rename(
+    topic_climateCauses = topic_climateCause,
+    kse_understand = kse_understanding) %>%
   relocate(ID, test) %>%
   filter(Status != "Survey Preview" & ID != "NANANA") %>%
   select(-any_of(meta))
