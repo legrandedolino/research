@@ -30,8 +30,8 @@ meta <- c("StartDate", "EndDate", "Status", "IPAddress", "Progress",
           "ExternalReference", "LocationLatitude", "LocationLongitude",
           "DistributionChannel", "UserLanguage",
           "birthMonth", "middleInitial", "pets", "motherInitial",
-          "ccUnderstanding_8", "workshopTopics_11", # These onward are signposts
-          "subjectsTeach_6_TEXT", "degreeOther") 
+          "ccUnderstanding_8", "workshopTopics_11" # These onward are signposts
+          ) 
 
 # Generate unique IDs from birth month, middle initial, and mother's initial
 # Removes question text, and rows without IDs or consent
