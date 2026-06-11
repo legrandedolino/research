@@ -14,6 +14,9 @@
 setwd("~/Documents/EfEC") # Change this for your own working directory
 
 library(readxl)
+library(dplyr)
+library(tidyr)
+
 pre <- read_xlsx("pre.xlsx")
 post <- read_xlsx("post.xlsx")
 
@@ -61,6 +64,16 @@ data <- bind_rows(pre, post) %>%
   arrange(ID)
 
 # Extracts a list of IDs that do not have exactly 2 rows
+unpaired_ids <- data %>%
+  group_by(ID) %>%
+  filter(
+    n() != 2 |                     
+      sum(test == "pre") != 1 |      
+      sum(test == "post") != 1 |     
+      n_distinct(year) != 1          
+  ) %>%
+  pull(ID) %>%
+  unique()
 unpaired_summary <- data %>%
   filter(ID %in% unpaired_ids) %>%
   select(ID, test, year) %>%
@@ -98,6 +111,7 @@ data <- data %>%
 
 # Orphaned - For deletion due to lack of pairing
 orphs <- c("SEPTY",
+           "JUNDS",
            "SEPBI",
            "NOVHL",
            "MAYHC",
@@ -132,9 +146,8 @@ View(unpaired_summary) # What shows are repeated but paired rows
 ################################################################################
 # PRELIMINARY DESCRIPTIVES
 ################################################################################
-library(tidyr)
 yearly_counts <- data %>%
-  filter(test == "pre") %>% # One row per person!
+  filter(test == "pre") %>%
   group_by(year) %>%
   summarize(Total_Participants = n())
 
