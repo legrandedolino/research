@@ -154,7 +154,7 @@ table2 %>%
   flextable::save_as_docx(path = "Table_2_Teaching_Environment.docx")
 
 ################################################################################
-# WHO ARE THEIR BASELINE ATTITUDES AND KNOWLEDGE?
+# WHAT ARE THEIR BASELINE ATTITUDES AND KNOWLEDGE?
 ################################################################################
 baseline_data <- data_clean %>%
   filter(test == "pre")
