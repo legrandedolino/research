@@ -4,7 +4,7 @@ Welcome! This repository contains data analysis scripts, Monte Carlo simulations
 
 ---
 
-## 📂 Project Directory
+## Project Directory
 
 ### 1. [COND: Impacts of Conditional Model Specification to Large Scale Assessments](./COND)
 * **Focus:** Monte Carlo simulations and analysis of impacts of Principal Component specification for IRT analysis of Large Scale Assessments, particularly in the context of sub-group differences.
@@ -19,6 +19,6 @@ Welcome! This repository contains data analysis scripts, Monte Carlo simulations
 
 ---
 
-## 📬 Connect with Me
+## Connect with Me
 * [Personal Website](https://legrandedolino.com) 
-* Email:[ledolino@iu.edu](mailto:ledolino@iu.edu)
+* Email: ledolino@iu.edu
