@@ -17,6 +17,9 @@ Welcome! This repository contains data analysis scripts, Monte Carlo simulations
 * **Focus:** Monte Carlo simulations and analysis of longitudinal experiments conducted under less-than-ideal design conditions.
 * **Publication:** [Read the Pre-print](https://doi.org/10.21203/rs.3.rs-7262280/v1)
 
+### 4. [DESAL: Ateneo de Davao University Desalination Study](./DESAL)
+* **Focus:** Response surface methodology project on ADDU's proposed desalination device.
+
 ---
 
 ## Connect with Me
