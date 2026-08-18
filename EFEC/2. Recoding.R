@@ -1,98 +1,102 @@
 ################################################################################
 #
 # 2. RECODING - EDUCATING FOR ENVIRONMENTAL CHANGE
-# Latest Version: Jun 11, 2026
-# 
-# This file processes items into workable values for analysis in R.
+# Latest Version: August 18, 2026
+#
+# Recodes survey items into values and factors for analysis.
 #
 ################################################################################
 
 ################################################################################
 # LOADING IN DATA AND INITIAL DEFINITIONS
 ################################################################################
+
 setwd("~/Documents/EfEC")
-data <- read.csv("data.csv")
 
 library(dplyr)
 library(tidyr)
 library(stringr)
 
+data <- read.csv("data.csv")
+
+# Identify repeat participants
+repeated <- data %>%
+  add_count(ID) %>%
+  filter(n == 4) %>%
+  select(year, test, ID)
+
 ################################################################################
 # RECODING DATA
 ################################################################################
 
-# Define scale for ccUnder
+# Recode climate-change understanding
 data_clean <- data %>%
   mutate(
     across(
-      starts_with("ccUnder_"), 
+      starts_with("ccUnder_"),
       ~ case_match(
         .x,
         "Strongly disagree" ~ 1,
-        "Disagree"          ~ 2,
+        "Disagree" ~ 2,
         "Somewhat disagree" ~ 3,
-        "Somewhat agree"    ~ 4,
-        "Agree"             ~ 5,
-        "Strongly agree"    ~ 6,
-        .default = NA 
+        "Somewhat agree" ~ 4,
+        "Agree" ~ 5,
+        "Strongly agree" ~ 6,
+        .default = NA
       )
     )
   )
 
-# Define scale for Efficacy
+# Recode teaching efficacy
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("Efficacy_"), 
+      starts_with("Efficacy_"),
       ~ case_match(
         .x,
         "Strongly disagree" ~ 1,
-        "Disagree"          ~ 2,
+        "Disagree" ~ 2,
         "Slightly disagree" ~ 3,
-        "Slightly agree"    ~ 4,
-        "Agree"             ~ 5,
-        "Strongly agree"    ~ 6,
-        .default = NA 
+        "Slightly agree" ~ 4,
+        "Agree" ~ 5,
+        "Strongly agree" ~ 6,
+        .default = NA
       )
     )
   )
 
-# Define scale for kse
-# NOTE: Since kse in 2022 is in a different scale, we cannot report them under
-# the same construct. Instead, it will make sense to report them as background.
+# Recode KSE; 2022 used a different scale and can only be reported as background
 data_clean <- data_clean %>%
   mutate(
     across(
       starts_with("kse"),
       ~ case_match(
         .x,
-        # The "Agree" Scale
-        "Strongly disagree"         ~ 1,
-        "Disagree"                  ~ 2,
-        "Somewhat disagree"         ~ 3,
-        "Somewhat agree"            ~ 4,
-        "Agree"                     ~ 5,
-        "Strongly agree"            ~ 6,
-        
-        # The "Importance" Scale
-        "Not very important at all" ~ 1, 
-        "Slightly important"        ~ 2, 
-        "Moderately important"      ~ 3, 
-        "Very important"            ~ 4, 
-        "Extremely important"       ~ 5,
-        
-        # Anything else gets wiped
-        .default = NA_real_ 
+        # Agreement scale
+        "Strongly disagree" ~ 1,
+        "Disagree" ~ 2,
+        "Somewhat disagree" ~ 3,
+        "Somewhat agree" ~ 4,
+        "Agree" ~ 5,
+        "Strongly agree" ~ 6,
+
+        # Importance scale
+        "Not very important at all" ~ 1,
+        "Slightly important" ~ 2,
+        "Moderately important" ~ 3,
+        "Very important" ~ 4,
+        "Extremely important" ~ 5,
+
+        .default = NA_real_
       )
     )
   )
 
-# Define scale for schoolRate
-# Not converting these to numbers since there's no pre-post comparison
+# Order school ratings without converting them to numeric values
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("schoolRate_"), 
+      starts_with("schoolRate_"),
       ~ factor(
         .x,
         levels = c("Poor", "Fair", "Average", "Good", "Excellent"),
@@ -101,11 +105,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for studentUnderstand
+# Order student-understanding responses
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("studentUnderstand_"), 
+      starts_with("studentUnderstand_"),
       ~ factor(
         .x,
         levels = c("Strongly disagree", "Disagree", "Somewhat disagree",
@@ -115,36 +119,36 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for topic
+# Recode topic familiarity
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("topic_"), 
+      starts_with("topic_"),
       ~ case_match(
         .x,
-        "I am unfamiliar with this topic" ~ 1, 
-        "I know a little about this topic" ~ 2, 
-        "I know a moderate amount about this topic" ~ 3, 
+        "I am unfamiliar with this topic" ~ 1,
+        "I know a little about this topic" ~ 2,
+        "I know a moderate amount about this topic" ~ 3,
         "I know a lot about this topic" ~ 4,
-        .default = NA 
+        .default = NA
       )
     )
   )
 
-# Define scale for challenge (pre)
+# Recode pretest challenges
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("challenge_"), 
+      starts_with("challenge_"),
       ~ if_else(
-        test == "pre", 
+        test == "pre",
         as.character(
           case_match(
             .x,
-            "Not at all challenging" ~ "1", 
-            "Somewhat challenging" ~ "2", 
-            "Moderately challenging" ~ "3", 
-            "Challenging" ~ "4", 
+            "Not at all challenging" ~ "1",
+            "Somewhat challenging" ~ "2",
+            "Moderately challenging" ~ "3",
+            "Challenging" ~ "4",
             "Extremely challenging" ~ "5",
             .default = .x
           )
@@ -154,20 +158,18 @@ data_clean <- data_clean %>%
     )
   )
 
-
-# Define scale for challenge (post)
-# NOTE: Same issue with kse (2022), cannot make pre-post comparisons
+# Recode posttest preparedness; the 2022 scale is not comparable
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("challenge_"), 
+      starts_with("challenge_"),
       ~ if_else(
-        test == "post", 
+        test == "post",
         case_match(
           .x,
-          "Not at all prepared" ~ "1", 
-          "Somewhat prepared"   ~ "2", 
-          "Moderately prepared" ~ "3", 
+          "Not at all prepared" ~ "1",
+          "Somewhat prepared" ~ "2",
+          "Moderately prepared" ~ "3",
           "Completely prepared" ~ "4",
           .default = .x
         ),
@@ -176,7 +178,7 @@ data_clean <- data_clean %>%
     )
   )
 
-# Defining subjectsTeach (pre)
+# Create pretest teaching-subject indicators
 data_clean <- data_clean %>%
   mutate(
     temp_subj = replace_na(subjectsTeach, ""),
@@ -191,25 +193,28 @@ data_clean <- data_clean %>%
   mutate(
     across(subElem:subUnc, ~ if_else(test == "pre", .x, NA_integer_))
   ) %>%
-  select(-RecordedDate, -temp_subj, -subjectsTeach, -subjectsTeach_6_TEXT)
+  select(-RecordedDate, -temp_subj, -subjectsTeach)
 
-# Defining classType (pre)
+# Create pretest class-type indicators
 data_clean <- data_clean %>%
   mutate(
     indGen = as.integer(str_detect(classType, fixed("General / Regular"))),
     indInc = as.integer(str_detect(classType, fixed("Inclusion"))),
-    indSpE = as.integer(str_detect(classType, fixed("Special Education (e.g., resource room, self-contained)"))),
+    indSpE = as.integer(str_detect(
+      classType,
+      fixed("Special Education (e.g., resource room, self-contained)")
+    )),
     indESL = as.integer(str_detect(classType, fixed("ESL (English as the Second Language)"))),
     indAdv = as.integer(str_detect(classType, fixed("Advanced / Gifted and Talented")))
   ) %>%
   mutate(across(starts_with("ind_"), ~ tidyr::replace_na(., 0))) %>%
   select(-classType)
 
-# Define scale for yearsTeaching
+# Order years-teaching categories
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("yearsTeaching_"), 
+      starts_with("yearsTeaching_"),
       ~ factor(
         .x,
         levels = c("1 - 5 years", "6 - 10 years", "11 - 15 years",
@@ -219,11 +224,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for education
+# Order education categories
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("education_"), 
+      starts_with("education_"),
       ~ factor(
         .x,
         levels = c("Bachelor's degree", "Graduate work but no advanced degree",
@@ -234,11 +239,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for degrees
+# Order degree categories
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("degrees_"), 
+      starts_with("degrees_"),
       ~ factor(
         .x,
         levels = c("No Degree", "Bachelor's Degree",
@@ -248,11 +253,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for studentSocioStatus
+# Order student socioeconomic-status categories
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("studentSocioStatus_"), 
+      starts_with("studentSocioStatus_"),
       ~ factor(
         .x,
         levels = c("Lower income class", "Lower-middle income class",
@@ -263,11 +268,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for ccControversial
+# Order perceived-controversy categories
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("ccControversial"), 
+      starts_with("ccControversial"),
       ~ factor(
         .x,
         levels = c("Not at all controversial", "Not very controversial",
@@ -277,19 +282,15 @@ data_clean <- data_clean %>%
     )
   )
 
-# gender, race, previousParticipant do not need to be ordered
-
 ################################################################################
 # SETTING LEVELS FOR EVALUATIONS
 ################################################################################
-# Again, no need to convert this to numbers as sophisticated quantitative
-# analysis is not appropriate.
 
-# Define scale for workshopObj
+# Order workshop-objective responses
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("workshopObj_"), 
+      starts_with("workshopObj_"),
       ~ factor(
         .x,
         levels = c("Strongly disagree", "Disagree", "Somewhat disagree",
@@ -299,11 +300,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for workshopRating
+# Order workshop ratings
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("workshopRating_"), 
+      starts_with("workshopRating_"),
       ~ factor(
         .x,
         levels = c("Poor", "Fair", "Average",
@@ -313,11 +314,11 @@ data_clean <- data_clean %>%
     )
   )
 
-# Define scale for workshopAct
+# Order workshop-activity responses
 data_clean <- data_clean %>%
   mutate(
     across(
-      starts_with("workshopAct_"), 
+      starts_with("workshopAct_"),
       ~ factor(
         .x,
         levels = c("Not at all helpful", "Somewhat helpful",
@@ -330,4 +331,5 @@ data_clean <- data_clean %>%
 ################################################################################
 # SAVING DATA
 ################################################################################
-save(data_clean, file="data_clean.RData")
+
+save(data_clean, file = "data_clean.RData")

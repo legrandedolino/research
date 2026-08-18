@@ -1,19 +1,16 @@
 ################################################################################
 #
 # 1. DATA CLEANING - EDUCATING FOR ENVIRONMENTAL CHANGE
-# Latest Version: Jun 11, 2026
-# 
-# This file processes both the pre- and post-test excel forms for further
-# data analysis.
+# Latest Version: August 18, 2026
 #
-# Version update:
-# Fixed issue in two non-aligned column names across pre- and post-tests
+# Processes the pre- and post-test Excel forms for analysis.
 #
 ################################################################################
 
 ################################################################################
 # LOADING IN DATA AND INITIAL CLEANING
 ################################################################################
+
 setwd("~/Documents/EfEC") # Change this for your own working directory
 
 library(readxl)
@@ -30,54 +27,74 @@ meta <- c("StartDate", "EndDate", "Status", "IPAddress", "Progress",
           "ExternalReference", "LocationLatitude", "LocationLongitude",
           "DistributionChannel", "UserLanguage",
           "birthMonth", "middleInitial", "pets", "motherInitial",
-          "ccUnderstanding_8", "workshopTopics_11" # These onward are signposts
-          ) 
+          "ccUnderstanding_8", "workshopTopics_11", # Signposts start here
+          "subjectsTeach_6_TEXT", "degreeOther")
 
-# Generate unique IDs from birth month, middle initial, and mother's initial
-# Removes question text, and rows without IDs or consent
-# Removes metadata columns
+# Generate IDs and remove question text, invalid responses, and metadata
 pre <- pre %>%
-  slice(-1) %>% # Removes question text
-  mutate(ID = toupper(paste0(substr(birthMonth, 1, 3), 
-                             substr(middleInitial, 1,1), 
-                             substr(motherInitial,1,1))),
-         test = "pre",
-         year = format(as.Date(as.numeric(EndDate), origin = "1899-12-30"), 
-                       "%Y")) %>% 
+  slice(-1) %>%
+  mutate(
+    ID = toupper(paste0(
+      substr(birthMonth, 1, 3),
+      substr(middleInitial, 1, 1),
+      substr(motherInitial, 1, 1)
+    )),
+    test = "pre",
+    year = format(
+      as.Date(as.numeric(EndDate), origin = "1899-12-30"),
+      "%Y"
+    )
+  ) %>%
   relocate(ID, test, year) %>%
-  filter(Status != "Survey Preview" & ID != "NANANA" & 
-           consent == "I agree") %>%
+  filter(
+    Status != "Survey Preview" &
+      ID != "NANANA" &
+      consent == "I agree"
+  ) %>%
   select(-any_of(meta))
 
-# Do the same for post, but also remove the first three entries
-# Also renames mislabeled columns
+# Process post-test data and correct mislabeled columns
 post <- post %>%
-  slice(-(1:4)) %>% 
-  mutate(ID = toupper(paste0(substr(birthMonth, 1, 3), 
-                             substr(middleInitial, 1,1), 
-                             substr(motherInitial,1,1))),
-         test = "post",
-         year = format(as.Date(as.numeric(EndDate), origin = "1899-12-30"), 
-                       "%Y")) %>% 
+  slice(-(1:4)) %>%
+  mutate(
+    ID = toupper(paste0(
+      substr(birthMonth, 1, 3),
+      substr(middleInitial, 1, 1),
+      substr(motherInitial, 1, 1)
+    )),
+    test = "post",
+    year = format(
+      as.Date(as.numeric(EndDate), origin = "1899-12-30"),
+      "%Y"
+    )
+  ) %>%
   rename(
     topic_climateCauses = topic_climateCause,
-    kse_understand = kse_understanding) %>%
+    kse_understand = kse_understanding
+  ) %>%
   relocate(ID, test) %>%
   filter(Status != "Survey Preview" & ID != "NANANA") %>%
   select(-any_of(meta))
-  
-# Merges into one large data frame and sort by ID
+
+# Merge datasets and sort by ID
 data <- bind_rows(pre, post) %>%
+  mutate(
+    race = recode(
+      race,
+      "White,American Indian or Alaska Native" =
+        "American Indian or Alaska Native"
+    )
+  ) %>%
   arrange(ID)
 
-# Extracts a list of IDs that do not have exactly 2 rows
+# Identify IDs without one pretest and one posttest in the same year
 unpaired_ids <- data %>%
   group_by(ID) %>%
   filter(
-    n() != 2 |                     
-      sum(test == "pre") != 1 |      
-      sum(test == "post") != 1 |     
-      n_distinct(year) != 1          
+    n() != 2 |
+      sum(test == "pre") != 1 |
+      sum(test == "post") != 1 |
+      n_distinct(year) != 1
   ) %>%
   pull(ID) %>%
   unique()
@@ -85,12 +102,16 @@ unpaired_summary <- data %>%
   filter(ID %in% unpaired_ids) %>%
   select(ID, test, year) %>%
   arrange(ID)
-View(unpaired_summary) # Manual verification was done after this step.
+View(unpaired_summary) # Manually verify the flagged records
 
-# Repeat teacher IDs - No issues
-reps <- c("NOVJP", "NOVKA", "SEPAN", "SEPDE", "SEPLC", "SEPMO")
+# Valid repeat-participant IDs
+reps <- c("NOVJP", "NOVKA", "SEPAN", "SEPDE", "SEPLC")
 
-# Repeat teacher IDs - With issues and for deletion
+# Distinguish the unrelated 2025 and 2026 SEPMO respondents
+data <- data %>%
+  mutate(ID = if_else(ID == "SEPMO" & year == 2026, "SEPMX", ID))
+
+# Remove invalid repeat-participant records
 data <- data %>%
   group_by(ID, year, test) %>%
   mutate(occurrence = row_number()) %>%
@@ -98,13 +119,14 @@ data <- data %>%
   filter(
     !(ID == "SEPMA" & year == 2026),
     !(ID == "MARAD" & year == 2026),
-    !(ID == "MARAD" & year == 2024 & test == "post" & occurrence > 1)
+    !(ID == "MARAD" & year == 2024 & test == "post" & occurrence > 1),
+    !(ID == "JUNDS" & year == 2023)
   ) %>%
   select(-occurrence)
 
-# Conversions - Strong evidence of a typo
+# Correct IDs with strong evidence of typographical errors
 data <- data %>%
-  mutate(ID = case_match(
+  mutate(ID = replace_values(
     ID,
     "SEPMB" ~ "SEPMM",
     "SEPMD" ~ "SEPLD",
@@ -113,13 +135,11 @@ data <- data %>%
     "AUGME" ~ "AUGMB",
     "FEBBW" ~ "FEBBB",
     "JUNRY" ~ "JUNRD",
-    .default = ID  # Keeps all other IDs exactly as they are
+    "JUNDF" ~ "JUNDS"
   ))
 
-# Orphaned - For deletion due to lack of pairing
+# Remove records without a matching pretest or posttest
 orphs <- c("SEPTY",
-           "JUNDS",
-           "SEPBI",
            "NOVHL",
            "MAYHC",
            "MAYKT",
@@ -136,36 +156,35 @@ orphs <- c("SEPTY",
            "JANAE",
            "JANAM",
            "JULLJ",
-           "JUNDF",
-           "SEPAM"
-           )
+           "SEPAM")
 
 data <- data %>%
   filter(!ID %in% orphs)
 
-# Verify that data is cleaned
+# Verify the remaining flagged records
 unpaired_summary <- data %>%
   filter(ID %in% unpaired_ids) %>%
   select(ID, test, year) %>%
   arrange(ID)
-View(unpaired_summary) # What shows are repeated but paired rows
+View(unpaired_summary) # Remaining records are valid repeated pairs
 
 ################################################################################
 # PRELIMINARY DESCRIPTIVES
 ################################################################################
+
 yearly_counts <- data %>%
   filter(test == "pre") %>%
   group_by(year) %>%
   summarize(Total_Participants = n())
 
-# Gender Aggregated by Year (Wide Format)
+# Summarize gender by year in wide format
 gender_by_year <- data %>%
   filter(test == "pre") %>%
   group_by(year, gender) %>%
   summarize(Count = n(), .groups = "drop") %>%
   pivot_wider(names_from = gender, values_from = Count, values_fill = 0)
 
-# Race Aggregated by Year (Wide Format)
+# Summarize race by year in wide format
 race_by_year <- data %>%
   filter(test == "pre") %>%
   group_by(year, race) %>%

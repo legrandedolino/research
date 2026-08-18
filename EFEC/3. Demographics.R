@@ -1,10 +1,9 @@
 ################################################################################
 #
 # 3. DEMOGRAPHICS - EDUCATING FOR ENVIRONMENTAL CHANGE
-# Latest Version: Jun 11, 2026
-# 
-# This file generates analysis to answer question about demographics and teacher
-# profiles.
+# Latest Version: August 18, 2026
+#
+# Summarizes participant demographics, teaching context, and institute feedback.
 #
 ################################################################################
 
@@ -12,25 +11,27 @@
 # LOADING IN DATA
 ################################################################################
 setwd("~/Documents/EfEC")
-load("data_clean.Rdata")
 
-################################################################################
-# WHO PARTICIPATED IN THE SUMMER SCIENCE INSTITUTE?
-################################################################################
 library(dplyr)
 library(gtsummary)
 library(flextable)
 
+load("data_clean.RData")
+
 theme_gtsummary_journal(journal = "jama")
 theme_gtsummary_compact()
+
+################################################################################
+# WHO PARTICIPATED IN THE SUMMER SCIENCE INSTITUTE?
+################################################################################
 
 demographics_data <- data_clean %>%
   filter(test == "pre")
 
-# TABLE A: Main Demographics & Education
+# Main demographics and education
 t_demo <- demographics_data %>%
   select(
-    year, gender, race, previousParticipant, 
+    year, gender, race, previousParticipant,
     starts_with("yearsTeaching"), starts_with("education"), starts_with("degrees")
   ) %>%
   tbl_summary(
@@ -52,10 +53,10 @@ t_demo <- demographics_data %>%
     missing = "ifany",
     missing_text = "Missing"
   ) %>%
-  add_overall(last = TRUE) %>% 
+  add_overall(last = TRUE) %>%
   bold_labels()
 
-# TABLE B: Teaching Levels
+# Teaching levels
 t_teach <- demographics_data %>%
   select(year, subElem, subMidLife, subMidEar, subHiLife, subHiEar, subOther) %>%
   tbl_summary(
@@ -72,9 +73,9 @@ t_teach <- demographics_data %>%
     missing = "no"
   ) %>%
   add_overall(last = TRUE) %>%
-  modify_table_body(~ .x %>% mutate(row_type = "level")) 
+  modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# TABLE C: Class Environment
+# Class environment
 t_class <- demographics_data %>%
   select(year, indGen, indInc, indSpE, indESL, indAdv) %>%
   tbl_summary(
@@ -90,20 +91,21 @@ t_class <- demographics_data %>%
     missing = "no"
   ) %>%
   add_overall(last = TRUE) %>%
-  modify_table_body(~ .x %>% mutate(row_type = "level")) 
+  modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# Stacking everything together
 table1_stacked <- tbl_stack(
   tbls = list(t_demo, t_teach, t_class),
-  group_header = c("Demographics and Experience", "Expected Teaching Level for
-                   Upcoming Year", "Expected Teaching Environment for Upcoming Year") 
+  group_header = c(
+    "Demographics and Experience",
+    "Expected Teaching Level for Upcoming Year",
+    "Expected Teaching Environment for Upcoming Year"
+  )
 ) %>%
   modify_header(label = "**Participant Characteristics**") %>%
   modify_caption("**Table 1. Demographic and Professional Characteristics of Participants by Year**")
 
 table1_stacked
 
-# Export to Word
 table1_stacked %>%
   as_flex_table() %>%
   flextable::save_as_docx(path = "Table_1_Participant_Demographics.docx")
@@ -111,11 +113,12 @@ table1_stacked %>%
 ################################################################################
 # WHAT IS THEIR TEACHING ENVIRONMENT?
 ################################################################################
+
 environment_data <- data_clean %>%
   filter(test == "pre") %>%
   select(
-    year, 
-    starts_with("schoolRate"), 
+    year,
+    starts_with("schoolRate"),
     starts_with("studentSocioStatus")
   )
 
@@ -134,15 +137,11 @@ table2 <- environment_data %>%
       "schoolRate_understanding" ~ "School's understanding of climate change and its impacts",
       starts_with("studentSocioStatus") ~ "Majority Socioeconomic Status of Students"
     ),
-    
-    missing = "ifany", 
+    missing = "ifany",
     missing_text = "Missing/Did not answer"
   ) %>%
-  
-  add_overall(last = TRUE) %>% 
-  
+  add_overall(last = TRUE) %>%
   bold_labels() %>%
-  
   modify_header(label = "**School Context**") %>%
   modify_caption("**Table 2. Self-Reported Perceptions on Teaching Environment
                  and School Context of Participants by Year**")
@@ -154,12 +153,13 @@ table2 %>%
   flextable::save_as_docx(path = "Table_2_Teaching_Environment.docx")
 
 ################################################################################
-# WHAT ARE THEIR BASELINE ATTITUDES AND KNOWLEDGE?
+# WHO ARE THEIR BASELINE ATTITUDES AND KNOWLEDGE?
 ################################################################################
+
 baseline_data <- data_clean %>%
   filter(test == "pre")
 
-# TABLE A: Climate Change Understanding (1 to 6 Scale)
+# Climate-change understanding (1-6 scale)
 t_under <- baseline_data %>%
   select(year, starts_with("ccUnder")) %>%
   tbl_summary(
@@ -171,14 +171,14 @@ t_under <- baseline_data %>%
       "ccUnder_stepsPeople" ~ "The steps people can take to limit climate change",
       "ccUnder_mitigateEffects" ~ "What is needed to mitigate the effects of climate change"
     ),
-    type = everything() ~ "continuous", 
+    type = everything() ~ "continuous",
     statistic = all_continuous() ~ "{mean} ({sd})",
     missing = "no"
   ) %>%
   add_overall(last = TRUE) %>%
   modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# TABLE B: Teaching Efficacy (1 to 6 Scale)
+# Teaching efficacy (1-6 scale)
 t_eff <- baseline_data %>%
   select(year, starts_with("Efficacy")) %>%
   tbl_summary(
@@ -203,7 +203,7 @@ t_eff <- baseline_data %>%
   add_overall(last = TRUE) %>%
   modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# TABLE C: Topic Familiarity (1 to 4 Scale)
+# Topic familiarity (1-4 scale)
 t_topic <- baseline_data %>%
   select(year, starts_with("topic")) %>%
   tbl_summary(
@@ -225,10 +225,10 @@ t_topic <- baseline_data %>%
   add_overall(last = TRUE) %>%
   modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# TABLE D: Perceived Challenges (1 to 5 Scale)
+# Perceived challenges (1-5 scale)
 t_challenge <- baseline_data %>%
   select(year, starts_with("challenge"), -challenge_Qual, -challenge_knowledge) %>%
-  mutate(across(starts_with("challenge"), as.numeric)) %>% 
+  mutate(across(starts_with("challenge"), as.numeric)) %>%
   tbl_summary(
     by = year,
     label = list(
@@ -249,12 +249,14 @@ t_challenge <- baseline_data %>%
   add_overall(last = TRUE) %>%
   modify_table_body(~ .x %>% mutate(row_type = "level"))
 
-# TABLE E: Perceived Controversy (Categorical)
+# Perceived controversy
 t_controv <- baseline_data %>%
   select(year, starts_with("ccControversial")) %>%
   tbl_summary(
     by = year,
-    label = list("ccControversial" = "Perceived Controversy of Climate Change in School District"),
+    label = list(
+      "ccControversial" = "Perceived Controversy of Climate Change in School District"
+    ),
     statistic = all_categorical() ~ "{n} ({p}%)",
     missing = "no"
   ) %>%
@@ -268,14 +270,13 @@ table3_stacked <- tbl_stack(
     "Familiarity to Workshop Topics [Mean (SD); 1=Unfamiliar to 4=Know a lot]",
     "Perceived Challenges [Mean (SD); 1=Not at all to 5=Extremely]",
     ""
-  ) 
+  )
 ) %>%
   modify_header(label = "**Baseline Construct & Items**") %>%
   modify_caption("**Table 3. Baseline Attitudes, Knowledge, and Perceived Challenges by Year**")
 
 table3_stacked
 
-# Export to Word
 table3_stacked %>%
   as_flex_table() %>%
   flextable::save_as_docx(path = "Table_3_Baseline_Attitudes.docx")
@@ -283,10 +284,11 @@ table3_stacked %>%
 ################################################################################
 # HOW DID THEY EVALUATE THE INSTITUTE?
 ################################################################################
+
 evaluation_data <- data_clean %>%
   filter(test == "post")
 
-# TABLE A: Workshop Objectives (Strongly Disagree to Strongly Agree)
+# Workshop objectives
 t_obj <- evaluation_data %>%
   select(year, starts_with("workshopObj")) %>%
   tbl_summary(
@@ -303,7 +305,7 @@ t_obj <- evaluation_data %>%
   add_overall(last = TRUE) %>%
   bold_labels()
 
-# TABLE B: Workshop Rating (Poor to Excellent)
+# Workshop rating
 t_rating <- evaluation_data %>%
   select(year, starts_with("workshopRating")) %>%
   tbl_summary(
@@ -317,7 +319,7 @@ t_rating <- evaluation_data %>%
   add_overall(last = TRUE) %>%
   bold_labels()
 
-# TABLE C: Workshop Activities (Not at all helpful to Very helpful)
+# Workshop activities
 t_act <- evaluation_data %>%
   select(year, starts_with("workshopAct")) %>%
   tbl_summary(
@@ -342,7 +344,7 @@ table4_stacked <- tbl_stack(
     "Workshop Objectives",
     "Workshop Ratings",
     "Helpfulness of Activities"
-  ) 
+  )
 ) %>%
   modify_header(label = "**Evaluation Construct & Items**") %>%
   modify_caption("**Table 4. Post-Institute Evaluations by Year**")
