@@ -20,6 +20,10 @@ Welcome! This repository contains data analysis scripts, Monte Carlo simulations
 ### 4. [DESAL: Ateneo de Davao University Desalination Study](./DESAL)
 * **Focus:** Response surface methodology project on ADDU's proposed desalination device.
 
+### 5. [UKSC: Predicting professional SRET employment at age 32 from adolescent and early-adult
+information](./UKSC)
+* **Focus:** Conducting both missing-data and prediction methods to describe associations and information gleamed from adolescent data on subsequent employment in Science, Research, Engineering and Technology careers.
+
 ---
 
 ## Connect with Me
